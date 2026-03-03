@@ -122,12 +122,12 @@ import {affil, dates, timelineKey, timelineValue} from "../../reactions.js";
       <select v-model="affil" id="affil" class="form-control">
         <option value="" hidden selected>직종을 선택 해주세요</option>
         <option value="웹 테크놀로지스">웹 테크놀로지스</option>
-        <option value="사이버보안">사이버보안</option>
-        <option value="클라우드컴퓨팅">클라우드컴퓨팅</option>
-        <option value="소프트웨어테스팅">소프트웨어테스팅</option>
-        <option value="정보기술">정보기술</option>
-        <option value="모바일">모바일</option>
-        <option value="IT 네트워크">IT 네트워크</option>
+        <option value="사이버 보안">사이버 보안</option>
+        <option value="클라우드 컴퓨팅">클라우드 컴퓨팅</option>
+        <option value="소프트웨어 테스팅">소프트웨어 테스팅</option>
+        <option value="정보 기술">정보 기술</option>
+        <option value="모바일 앱 개발">모바일 앱 개발</option>
+        <option value="IT 네트워크 시스템">IT 네트워크 시스템</option>
       </select>
 
       <label for="affil">직종</label>
