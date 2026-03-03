@@ -9,7 +9,10 @@
   }
 
   function addTimeline() {
-    timelineKey.value.push(JSON.parse(JSON.stringify(timelineKeyInfo)));
+    let info = JSON.parse(JSON.stringify(timelineKeyInfo));
+    info.start = [...timelineKey.value[timelineKey.value.length - 1]['end']];
+    info.end = [String(info.start[0] * 1 + 1).padEnd(2, "0"), "00"];
+    timelineKey.value.push(info);
     timelineValue.value.push("");
   }
 </script>
@@ -169,11 +172,13 @@
 
   .item:nth-child(1) {
     border-top: 1px solid gray;
-    border-radius: 5px 5px 0 0;
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
   }
 
   .item:nth-last-child(1) {
-    border-radius: 0 0 5px 5px;
+    border-bottom-left-radius: 5px;
+    border-bottom-right-radius: 5px;
   }
 
   .sec {
