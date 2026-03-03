@@ -14,6 +14,69 @@ import {affil, dates, timelineKey, timelineValue} from "../../reactions.js";
     ShadingType,
   } from "docx";
   import { saveAs } from "file-saver";
+  import jsPDF from "jspdf";
+
+async function makeTrainingPdf() {
+  if (affil.value === "") return alert("직종을 선택 해주세요.");
+  if (dates.value === "") return alert("날짜를 선택 해주세요.");
+
+  let dateArr = dates.value.split("-");
+  let time = new Date(dates.value + " 12:00:00");
+  let day = ["일", "월", "화", "수", "목", "금", "토"][time.getDay()];
+
+  let title = `${affil.value} 훈련일지`;
+  let dateText = `${dateArr[0]}년 ${dateArr[1]}월 ${dateArr[2]}일 (${day})`;
+
+  let rows = [];
+
+  timelineValue.value.forEach((v, i) => {
+    let now = timelineKey.value[i];
+    rows.push([
+      `${now.start.join(":")} ~ ${now.end.join(":")}`,
+      v
+    ]);
+  });
+
+  const doc = new jsPDF({
+    orientation: "portrait",
+    unit: "mm",
+    format: "a4"
+  });
+
+  // 🔥 한글 폰트 필요 (기본 폰트는 한글 깨짐)
+  // 아래는 기본 대안: 시스템 폰트 대신 NotoSansKR 사용 권장
+  // (아래에서 설명함)
+
+  doc.setFont("helvetica"); // 한글 안됨 (폰트 등록 필요)
+
+  doc.setFontSize(18);
+  doc.text(title, 105, 20, { align: "center" });
+
+  doc.setFontSize(12);
+  doc.text(dateText, 105, 30, { align: "center" });
+
+  doc.setFontSize(14);
+  doc.text("훈련 시간표", 14, 45);
+
+  autoTable(doc, {
+    startY: 50,
+    head: [["시간", "내용"]],
+    body: rows,
+    styles: {
+      fontSize: 10,
+      cellPadding: 3,
+    },
+    headStyles: {
+      fillColor: [240, 240, 240],
+    },
+    columnStyles: {
+      0: { cellWidth: 35 },  // 시간칸 좁게
+      1: { cellWidth: 140 }, // 내용칸 넓게
+    },
+  });
+
+  doc.save(`${dates.value.replaceAll("-", "_")}_훈련일지.pdf`);
+}
 
   async function makeTrainingDocx() {
     if (affil.value === "") return alert("직종을 선택 해주세요.");
@@ -138,7 +201,8 @@ import {affil, dates, timelineKey, timelineValue} from "../../reactions.js";
       <label for="date">날짜</label>
     </div>
 
-    <button class="btn btn-primary" @click="makeTrainingDocx()">다운로드</button>
+    <button class="btn btn-primary" @click="makeTrainingDocx()">Word 다운로드</button>
+    <button class="btn btn-primary" @click="makeTrainingPdf()">PDF 다운로드</button>
   </div>
 </template>
 
