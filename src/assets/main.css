@@ -1,0 +1,74 @@
+@import './bootstrap.css';
+
+body {
+  background: #e2e2e2;
+  overflow-x: hidden;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.screen {
+  width: 100vw;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10vh 0;
+}
+
+.screen .box {
+  width: 1400px;
+  min-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border-radius: 1rem;
+  padding: 2rem 2.25rem;
+}
+
+.flex {display: flex;}
+.ais {
+  align-items: start;
+}
+.aic {
+  align-items: center;}
+.aie {
+  align-items: end;}
+.jcs {
+  justify-content: start;}
+.jcc {
+  justify-content: center;}
+.jce {
+  justify-content: end;}
+.jcsb {
+  justify-content: space-between;}
+.tac {
+  text-align: center;}
+.gap {gap: 1rem}
+.gap2 {
+  gap: .5rem;}
+.col-flex {
+  display: flex;
+  flex-direction: column;
+}
+
+.por {
+  position: relative;}
+.poa {
+  position: absolute;}
+
+.dn {
+  display: none;}
+.inv {
+  opacity: 0;
+  pointer-events: none;
+}
