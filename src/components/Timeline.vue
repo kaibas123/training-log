@@ -11,7 +11,7 @@
   function addTimeline() {
     let info = JSON.parse(JSON.stringify(timelineKeyInfo));
     info.start = [...timelineKey.value[timelineKey.value.length - 1]['end']];
-    info.end = [String(info.start[0] * 1 + 1).padEnd(2, "0"), "00"];
+    info.end = [String(info.start[0] * 1 + 1).padStart(2, "0"), "00"];
     timelineKey.value.push(info);
     timelineValue.value.push("");
   }
