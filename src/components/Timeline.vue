@@ -123,6 +123,11 @@
     margin-top: 1rem;
   }
 
+  .timeline {
+    border-radius: 5px;
+    overflow: hidden;
+  }
+
   textarea {
     width: 100%;
     border: 0;
