@@ -123,11 +123,6 @@
     margin-top: 1rem;
   }
 
-  .timeline {
-    border-radius: 5px;
-    overflow: hidden;
-  }
-
   textarea {
     width: 100%;
     border: 0;
@@ -172,7 +167,14 @@
     position: relative;
   }
 
-  .item:nth-child(1) {border-top: 1px solid gray;}
+  .item:nth-child(1) {
+    border-top: 1px solid gray;
+    border-radius: 5px 5px 0 0;
+  }
+
+  .item:nth-last-child(1) {
+    border-radius: 0 0 5px 5px;
+  }
 
   .sec {
     width: 100%;
