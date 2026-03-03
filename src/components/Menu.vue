@@ -18,6 +18,18 @@ import {affil, dates, timelineKey, timelineValue} from "../../reactions.js";
   import autoTable from "jspdf-autotable";
   import fontFile from "@/assets/NotoSansKR.ttf?url";
 
+function arrayBufferToBase64(buffer) {
+  let binary = "";
+  const bytes = new Uint8Array(buffer);
+  const chunkSize = 0x8000;
+
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+  }
+
+  return btoa(binary);
+}
+
 async function makeTrainingPdf() {
   if (affil.value === "") return alert("직종을 선택 해주세요.");
   if (dates.value === "") return alert("날짜를 선택 해주세요.");
@@ -45,19 +57,23 @@ async function makeTrainingPdf() {
     format: "a4"
   });
 
-  const font = await fetch(fontFile).then(res => res.arrayBuffer());
+  const res = await fetch(fontFile);
+  if (!res.ok) throw new Error("폰트 파일을 못 불러옴: " + res.status);
 
-  doc.addFileToVFS("NotoSansKR.ttf", font);
+  const buffer = await res.arrayBuffer();
+  const base64 = arrayBufferToBase64(buffer);
+
+  doc.addFileToVFS("NotoSansKR.ttf",base64);
   doc.addFont("NotoSansKR.ttf", "NotoSansKR", "normal");
   doc.setFont("NotoSansKR");
 
-  doc.setFontSize(18);
-  doc.text(title, 105, 20, { align: "center" });
-
-  doc.setFontSize(12);
-  doc.text(dateText, 105, 30, { align: "center" });
+  doc.setFontSize(22);
+  doc.text(title, 14, 20);
 
   doc.setFontSize(14);
+  doc.text(dateText, 14, 30);
+
+  doc.setFontSize(16);
   doc.text("훈련 시간표", 14, 45);
 
   autoTable(doc, {
@@ -65,14 +81,26 @@ async function makeTrainingPdf() {
     head: [["시간", "내용"]],
     body: rows,
     styles: {
-      fontSize: 10,
+      font: "NotoSansKR",
+      fontSize: 12,
       cellPadding: 3,
     },
     headStyles: {
-      fillColor: [240, 240, 240],
+      font: "NotoSansKR",
+      fontStyle: "normal",
+      fillColor: [0, 0, 0],
+      textColor: [255, 255, 255],
+      halign: "center",
+      valign: "middle",
+    },
+    didParseCell: function (data) {
+      if (data.section === "head") {
+        data.cell.styles.font = "NotoSansKR";
+        data.cell.styles.fontStyle = "normal";
+      }
     },
     columnStyles: {
-      0: { cellWidth: 35 },  // 시간칸 좁게
+      0: { cellWidth: 35, halign: "center" },  // 시간칸 좁게
       1: { cellWidth: 140 }, // 내용칸 넓게
     },
   });
