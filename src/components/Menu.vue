@@ -15,6 +15,8 @@ import {affil, dates, timelineKey, timelineValue} from "../../reactions.js";
   } from "docx";
   import { saveAs } from "file-saver";
   import jsPDF from "jspdf";
+  import autoTable from "jspdf-autotable";
+  import fontFile from "@/assets/NotoSansKR.ttf?url";
 
 async function makeTrainingPdf() {
   if (affil.value === "") return alert("직종을 선택 해주세요.");
@@ -43,11 +45,11 @@ async function makeTrainingPdf() {
     format: "a4"
   });
 
-  // 🔥 한글 폰트 필요 (기본 폰트는 한글 깨짐)
-  // 아래는 기본 대안: 시스템 폰트 대신 NotoSansKR 사용 권장
-  // (아래에서 설명함)
+  const font = await fetch(fontFile).then(res => res.arrayBuffer());
 
-  doc.setFont("helvetica"); // 한글 안됨 (폰트 등록 필요)
+  doc.addFileToVFS("NotoSansKR.ttf", font);
+  doc.addFont("NotoSansKR.ttf", "NotoSansKR", "normal");
+  doc.setFont("NotoSansKR");
 
   doc.setFontSize(18);
   doc.text(title, 105, 20, { align: "center" });
