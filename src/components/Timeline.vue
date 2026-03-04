@@ -11,6 +11,7 @@
   function addTimeline() {
     let info = JSON.parse(JSON.stringify(timelineKeyInfo));
     info.start = [...timelineKey.value[timelineKey.value.length - 1]['end']];
+    info.start = info.start[0] === "12" ? info.start = ['13', "00"] : (info.start[0] === "18" ? ["18", "40"] : info.start);
     info.end = [String(info.start[0] * 1 + 1).padStart(2, "0"), "00"];
     timelineKey.value.push(info);
     timelineValue.value.push("");
@@ -26,7 +27,7 @@
           <p>시작 시간</p>
 
           <div class="flex gap2 aic">
-            <select v-model="timelineKey[i]['start'][0]" :id="[`startHour${i}`]" class="form-control">
+            <select v-model="v['start'][0]" :id="[`startHour${i}`]" class="form-control">
                 <option value="00">00</option>
                 <option value="01">01</option>
                 <option value="02">02</option>
@@ -55,7 +56,7 @@
 
             <p>:</p>
 
-            <select v-model="timelineKey[i]['start'][1]" :id="[`startMin${i}`]" class="form-control">
+            <select v-model="v['start'][1]" :id="[`startMin${i}`]" class="form-control">
               <option value="00">00</option>
               <option value="10">10</option>
               <option value="20">20</option>
@@ -72,7 +73,7 @@
           <p>종료 시간</p>
 
           <div class="flex gap2 aic">
-            <select v-model="timelineKey[i]['end'][0]" :id="[`endHour${i}`]" class="form-control">
+            <select v-model="v['end'][0]" :id="[`endHour${i}`]" class="form-control">
               <option value="00">00</option>
               <option value="01">01</option>
               <option value="02">02</option>
@@ -101,7 +102,7 @@
 
             <p>:</p>
 
-            <select v-model="timelineKey[i]['end'][1]" :id="[`endMin${i}`]" class="form-control">
+            <select v-model="v['end'][1]" :id="[`endMin${i}`]" class="form-control">
               <option value="00">00</option>
               <option value="10">10</option>
               <option value="20">20</option>
