@@ -31,7 +31,7 @@ img {
 
 .screen .box {
   width: 1400px;
-  min-height: 60vh;
+  min-height: 80vh;
   display: flex;
   flex-direction: column;
   background: #fff;

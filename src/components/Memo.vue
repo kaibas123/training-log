@@ -17,7 +17,7 @@ import {useMemo, memo} from "../../reactions.js";
 <style scoped>
   textarea {
     width: 100%;
-    height: 300px;
+    height: 250px;
     resize: none;
     border-radius: 5px;
     outline: 0;
