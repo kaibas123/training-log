@@ -17,6 +17,11 @@ import {affil, dates, memo, timelineKey, timelineValue, useMemo} from "../../rea
   import jsPDF from "jspdf";
   import autoTable from "jspdf-autotable";
   import fontFile from "@/assets/NotoSansKR.ttf?url";
+import {watch} from "vue";
+
+  watch(affil, () => {
+    localStorage['affil'] = affil.value;
+  });
 
 function arrayBufferToBase64(buffer) {
   let binary = "";
