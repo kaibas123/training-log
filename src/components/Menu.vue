@@ -1,5 +1,5 @@
 <script setup>
-import {affil, dates, timelineKey, timelineValue} from "../../reactions.js";
+import {affil, dates, memo, timelineKey, timelineValue, useMemo} from "../../reactions.js";
   import {
     Document,
     Packer,
@@ -42,7 +42,6 @@ async function makeTrainingPdf() {
   let dateText = `${dateArr[0]}년 ${dateArr[1]}월 ${dateArr[2]}일 (${day})`;
 
   let rows = [];
-
   timelineValue.value.forEach((v, i) => {
     let now = timelineKey.value[i];
     rows.push([
@@ -63,7 +62,7 @@ async function makeTrainingPdf() {
   const buffer = await res.arrayBuffer();
   const base64 = arrayBufferToBase64(buffer);
 
-  doc.addFileToVFS("NotoSansKR.ttf",base64);
+  doc.addFileToVFS("NotoSansKR.ttf", base64);
   doc.addFont("NotoSansKR.ttf", "NotoSansKR", "normal");
   doc.setFont("NotoSansKR");
 
@@ -76,6 +75,7 @@ async function makeTrainingPdf() {
   doc.setFontSize(16);
   doc.text("훈련 시간표", 14, 45);
 
+  // 1) 시간표 테이블
   autoTable(doc, {
     startY: 50,
     head: [["시간", "내용"]],
@@ -84,6 +84,7 @@ async function makeTrainingPdf() {
       font: "NotoSansKR",
       fontSize: 12,
       cellPadding: 3,
+      valign: "top",
     },
     headStyles: {
       font: "NotoSansKR",
@@ -100,10 +101,34 @@ async function makeTrainingPdf() {
       }
     },
     columnStyles: {
-      0: { cellWidth: 35, halign: "center" },  // 시간칸 좁게
-      1: { cellWidth: 140 }, // 내용칸 넓게
+      0: { cellWidth: 35, halign: "center" },
+      1: { cellWidth: 140 },
     },
   });
+
+  // ✅ 2) 메모 섹션 (useMemo일 때만)
+  if (useMemo.value) {
+    const afterTableY = doc.lastAutoTable?.finalY ?? 50;
+    const memoTitleY = afterTableY + 12;
+
+    doc.setFontSize(16);
+    doc.text("메모", 14, memoTitleY);
+
+    autoTable(doc, {
+      startY: memoTitleY + 5,
+      head: [],
+      body: [[(memo.value ?? "").toString()]],
+      styles: {
+        font: "NotoSansKR",
+        fontSize: 12,
+        cellPadding: 4,
+        valign: "top",
+      },
+      columnStyles: {
+        0: { cellWidth: 175 }, // 거의 전체 폭
+      },
+    });
+  }
 
   doc.save(`${dates.value.replaceAll("-", "_")}_훈련일지.pdf`);
 }
@@ -152,19 +177,30 @@ async function makeTrainingPdf() {
           ],
         });
 
-    const dataCell = (text, nowWidth, shadeHex = "FFFFFF") =>
-        new TableCell({
-          width: nowWidth,
-          borders,
-          margins,
-          shading: { type: ShadingType.CLEAR, color: "auto", fill: shadeHex },
-          children: [new Paragraph({
-              children: [ new TextRun({ text, font: "Malgun Gothic", size: 22, }) ]
-            })
-          ]
-        });
+    const dataCell = (text, nowWidth, shadeHex = "FFFFFF") => {
+      const lines = text.split("\n");
 
-    const table = new Table({
+      return new TableCell({
+        width: nowWidth,
+        borders,
+        margins,
+        shading: { type: ShadingType.CLEAR, color: "auto", fill: shadeHex },
+        children: [
+          new Paragraph({
+            children: lines.map((line, i) =>
+                new TextRun({
+                  text: line,
+                  font: "Malgun Gothic",
+                  size: 22,
+                  break: i === 0 ? 0 : 1
+                })
+            )
+          })
+        ]
+      });
+    };
+
+    const logTable = new Table({
       width: { size: 100, type: WidthType.PERCENTAGE },
       rows: [
         // 헤더(시간/내용)
@@ -181,6 +217,27 @@ async function makeTrainingPdf() {
       ],
     });
 
+    const memoTable = new Table({
+      width: { size: 100, type: WidthType.PERCENTAGE },
+      rows: [
+          new TableRow({
+            children: [dataCell(memo.value, { size: 100, type: WidthType.PERCENTAGE },)],
+          })
+      ],
+    })
+
+    let memoSection = [];
+
+    if (useMemo.value) {
+      memoSection = [
+        new Paragraph({
+          spacing: { before: 600, after: 100 },
+          children: [new TextRun({ text: "메모", bold: true, size: 24, font: "Malgun Gothic" })],
+        }),
+        memoTable
+      ]
+    }
+
     const doc = new Document({
       sections: [
         {
@@ -196,7 +253,8 @@ async function makeTrainingPdf() {
               spacing: { before: 200, after: 100 },
               children: [new TextRun({ text: "훈련 시간표", bold: true, size: 24, font: "Malgun Gothic" })],
             }),
-            table,
+            logTable,
+            ...memoSection
           ],
         },
       ],

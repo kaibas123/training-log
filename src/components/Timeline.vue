@@ -19,7 +19,7 @@
 </script>
 
 <template>
-  <h2>훈련 시간표</h2>
+  <h2 class="mt2">훈련 시간표</h2>
   <div class="timeline">
     <div class="item" v-for="(v, i) in timelineKey">
       <div class="sec jcc gap">
@@ -123,10 +123,6 @@
 </template>
 
 <style scoped>
-  h2 {
-    margin-top: 1rem;
-  }
-
   textarea {
     width: 100%;
     border: 0;
