@@ -10,7 +10,7 @@ import {useMemo, memo} from "../../reactions.js";
       <input type="checkbox" v-model="useMemo">
     </div>
 
-    <textarea v-model="memo" v-if="useMemo" class="memo" placeholder="메모를 입력 해보세요!"></textarea>
+    <textarea v-model="memo" v-if="useMemo" class="memo" placeholder="메모를 입력 해주세요!"></textarea>
   </div>
 </template>
 

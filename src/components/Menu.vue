@@ -39,6 +39,8 @@ async function makeTrainingPdf() {
   if (affil.value === "") return alert("직종을 선택 해주세요.");
   if (dates.value === "") return alert("날짜를 선택 해주세요.");
 
+  localStorage['trainingLogData'] = "";
+
   let dateArr = dates.value.split("-");
   let time = new Date(dates.value + " 12:00:00");
   let day = ["일", "월", "화", "수", "목", "금", "토"][time.getDay()];
@@ -141,6 +143,8 @@ async function makeTrainingPdf() {
   async function makeTrainingDocx() {
     if (affil.value === "") return alert("직종을 선택 해주세요.");
     if (dates.value === "") return alert("날짜를 선택 해주세요.");
+
+    localStorage['trainingLogData'] = "";
 
     let dateArr = dates.value.split("-");
     let time = new Date(dates.value + " 12:00:00");
@@ -268,6 +272,20 @@ async function makeTrainingPdf() {
     const blob = await Packer.toBlob(doc);
     saveAs(blob, `${dates.value.replaceAll("-", "_")}_훈련일지.docx`);
   }
+
+  function saveData() {
+    let data = {
+      dates: dates.value,
+      timelineValue: timelineValue.value,
+      timelineKey: timelineKey.value,
+      useMemo: useMemo.value,
+      memo: memo.value,
+    }
+
+    localStorage['trainingLogData'] = JSON.stringify(data);
+
+    alert("현재 작성하고 계신 내용이 임시저장 되었습니다!");
+  }
 </script>
 
 <template>
@@ -294,11 +312,18 @@ async function makeTrainingPdf() {
       <label for="date">날짜</label>
     </div>
 
+    <button class="btn btn-success" @click="saveData()">임시저장</button>
     <button class="btn btn-primary" @click="makeTrainingDocx()">Word 다운로드</button>
-    <button class="btn btn-primary" @click="makeTrainingPdf()">PDF 다운로드</button>
+    <button class="btn btn-secondary" @click="makeTrainingPdf()">PDF 다운로드</button>
   </div>
 </template>
 
 <style scoped>
-
+  .btn {
+    transition: opacity .3s;
+    opacity: .5;
+  }
+  .btn:hover {
+    opacity: 1;
+  }
 </style>
