@@ -12,6 +12,7 @@ import {affil, dates, memo, timelineKey, timelineValue, useMemo} from "../../rea
     AlignmentType,
     BorderStyle,
     ShadingType,
+    VerticalMergeType,
   } from "docx";
   import { saveAs } from "file-saver";
   import jsPDF from "jspdf";
@@ -39,7 +40,7 @@ async function makeTrainingPdf() {
   if (affil.value === "") return alert("직종을 선택 해주세요.");
   if (dates.value === "") return alert("날짜를 선택 해주세요.");
 
-  localStorage['trainingLogData'] = "";
+  localStorage["trainingLogData"] = "";
 
   let dateArr = dates.value.split("-");
   let time = new Date(dates.value + " 12:00:00");
@@ -47,14 +48,14 @@ async function makeTrainingPdf() {
 
   let title = `${affil.value} 훈련일지`;
   let dateText = `${dateArr[0]}년 ${dateArr[1]}월 ${dateArr[2]}일 (${day})`;
-
   let rows = [];
+
   timelineValue.value.forEach((v, i) => {
-    let now = timelineKey.value[i];
-    rows.push([
-      `${now.start.join(":")} ~ ${now.end.join(":")}`,
-      v
-    ]);
+    let keys = timelineKey.value[i];
+    rows.push({
+      time: [...keys.map(va => `${va.start.join(":")} ~ ${va.end.join(":")}`)],
+      content: v
+    });
   });
 
   const doc = new jsPDF({
@@ -82,57 +83,135 @@ async function makeTrainingPdf() {
   doc.setFontSize(16);
   doc.text("훈련 시간표", 14, 45);
 
-  // 1) 시간표 테이블
+  // docx 구조와 맞춘 PDF용 body
+  // merge처럼 보이게 하기 위해 메타정보도 같이 넣음
+  const logBody = [];
+  rows.forEach((r) => {
+    r.time.forEach((t, i) => {
+      logBody.push([
+        {
+          content: t,
+          _mergeInfo: {
+            type: "time",
+            first: i === 0,
+            last: i === r.time.length - 1,
+            single: r.time.length === 1
+          }
+        },
+        {
+          content: i === 0 ? (r.content ?? "").toString() : "",
+          _mergeInfo: {
+            type: "content",
+            first: i === 0,
+            last: i === r.time.length - 1,
+            single: r.time.length === 1
+          }
+        }
+      ]);
+    });
+  });
+
   autoTable(doc, {
     startY: 50,
     head: [["시간", "내용"]],
-    body: rows,
+    body: logBody,
     styles: {
       font: "NotoSansKR",
       fontSize: 12,
       cellPadding: 3,
       valign: "top",
+      lineColor: [153, 153, 153],
+      lineWidth: 0.2,
+      overflow: "linebreak",
+      textColor: [0, 0, 0],
     },
     headStyles: {
       font: "NotoSansKR",
       fontStyle: "normal",
-      fillColor: [0, 0, 0],
-      textColor: [255, 255, 255],
+      fillColor: [255, 255, 255],
+      textColor: [0, 0, 0],
       halign: "center",
       valign: "middle",
-    },
-    didParseCell: function (data) {
-      if (data.section === "head") {
-        data.cell.styles.font = "NotoSansKR";
-        data.cell.styles.fontStyle = "normal";
-      }
+      lineColor: [153, 153, 153],
+      lineWidth: 0.2,
     },
     columnStyles: {
-      0: { cellWidth: 35, halign: "center" },
-      1: { cellWidth: 140 },
+      0: { cellWidth: 35, halign: "center", valign: "middle" },
+      1: { cellWidth: 140, valign: "top" },
+    },
+    didParseCell: function (data) {
+      data.cell.styles.font = "NotoSansKR";
+      data.cell.styles.fontStyle = "normal";
+
+      if (data.section !== "body") return;
+
+      const raw = data.cell.raw;
+      const mergeInfo = raw?._mergeInfo;
+
+      if (!mergeInfo) return;
+
+      // 내용칸만 세로 병합처럼 보이게 처리
+      if (data.column.index === 1) {
+        if (mergeInfo.single) {
+          data.cell.styles.lineWidth = {
+            top: 0.2,
+            right: 0.2,
+            bottom: 0.2,
+            left: 0.2,
+          };
+        } else if (mergeInfo.first) {
+          data.cell.styles.lineWidth = {
+            top: 0.2,
+            right: 0.2,
+            bottom: 0,
+            left: 0.2,
+          };
+        } else if (mergeInfo.last) {
+          data.cell.styles.lineWidth = {
+            top: 0,
+            right: 0.2,
+            bottom: 0.2,
+            left: 0.2,
+          };
+        } else {
+          data.cell.styles.lineWidth = {
+            top: 0,
+            right: 0.2,
+            bottom: 0,
+            left: 0.2,
+          };
+        }
+      }
     },
   });
 
-  // ✅ 2) 메모 섹션 (useMemo일 때만)
   if (useMemo.value) {
     const afterTableY = doc.lastAutoTable?.finalY ?? 50;
     const memoTitleY = afterTableY + 12;
 
+    doc.setFont("NotoSansKR");
     doc.setFontSize(16);
     doc.text("메모", 14, memoTitleY);
 
     autoTable(doc, {
       startY: memoTitleY + 5,
-      head: [],
       body: [[(memo.value ?? "").toString()]],
       styles: {
         font: "NotoSansKR",
         fontSize: 12,
-        cellPadding: 4,
+        cellPadding: 3,
         valign: "top",
+        lineColor: [153, 153, 153],
+        lineWidth: 0.2,
+        overflow: "linebreak",
+        textColor: [0, 0, 0],
       },
       columnStyles: {
-        0: { cellWidth: 175 }, // 거의 전체 폭
+        0: { cellWidth: 175, valign: "top" },
+      },
+      didParseCell: function (data) {
+        data.cell.styles.font = "NotoSansKR";
+        data.cell.styles.fontStyle = "normal";
       },
     });
   }
@@ -155,8 +234,8 @@ async function makeTrainingPdf() {
     let rows = [];
 
     timelineValue.value.forEach((v, i) => {
-      let now = timelineKey.value[i];
-      rows.push({ time: `${now.start.join(":")} ~ ${now.end.join(":")}`, content: v });
+      let keys = timelineKey.value[i];
+      rows.push({ time: [...keys.map(va => `${va.start.join(":")} ~ ${va.end.join(":")}`)], content: v });
     });
 
     const margins = {
@@ -186,11 +265,12 @@ async function makeTrainingPdf() {
           ],
         });
 
-    const dataCell = (text, nowWidth, shadeHex = "FFFFFF") => {
+    const dataCell = (text, span, nowWidth, shadeHex = "FFFFFF") => {
       const lines = text.split("\n");
 
       return new TableCell({
         width: nowWidth,
+        ...span,
         borders,
         margins,
         shading: { type: ShadingType.CLEAR, color: "auto", fill: shadeHex },
@@ -209,20 +289,26 @@ async function makeTrainingPdf() {
       });
     };
 
+    let logCells = [];
+
+    rows.forEach((r) => {
+      logCells.push(...r.time.map((v, i) => {
+        return new TableRow({
+          children: [dataCell(v, {}, { size: 20, type: WidthType.PERCENTAGE }), dataCell(!i ? r.content : "", {
+            verticalMerge: !i ? VerticalMergeType.RESTART : VerticalMergeType.CONTINUE
+          }, { size: 80, type: WidthType.PERCENTAGE })],
+        })
+      }));
+    });
+
     const logTable = new Table({
       width: { size: 100, type: WidthType.PERCENTAGE },
       rows: [
-        // 헤더(시간/내용)
         new TableRow({
-          children: [headerCell("시간", { size: 20, type: WidthType.PERCENTAGE },), headerCell("내용", { size: 80, type: WidthType.PERCENTAGE },)],
+          children: [headerCell("시간", { size: 20, type: WidthType.PERCENTAGE }), headerCell("내용", { size: 80, type: WidthType.PERCENTAGE })],
         }),
 
-        // 데이터 행들 (스샷처럼 연한 파란색)
-        ...rows.map((r) =>
-            new TableRow({
-              children: [dataCell(r.time, { size: 20, type: WidthType.PERCENTAGE },), dataCell(r.content, { size: 80, type: WidthType.PERCENTAGE },)],
-            })
-        ),
+        ...logCells,
       ],
     });
 
