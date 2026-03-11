@@ -1,5 +1,15 @@
 <script setup>
-import {affil, dates, memo, timelineKey, timelineValue, useMemo} from "../../reactions.js";
+import {
+  affil,
+  dates,
+  memo,
+  taskMemo,
+  taskTime,
+  taskTitle,
+  timelineKey,
+  timelineValue,
+  useMemo, useTask
+} from "../../reactions.js";
   import {
     Document,
     Packer,
@@ -48,6 +58,7 @@ async function makeTrainingPdf() {
 
   let title = `${affil.value} 훈련일지`;
   let dateText = `${dateArr[0]}년 ${dateArr[1]}월 ${dateArr[2]}일 (${day})`;
+
   let rows = [];
 
   timelineValue.value.forEach((v, i) => {
@@ -65,8 +76,6 @@ async function makeTrainingPdf() {
   });
 
   const res = await fetch(fontFile);
-  if (!res.ok) throw new Error("폰트 파일을 못 불러옴: " + res.status);
-
   const buffer = await res.arrayBuffer();
   const base64 = arrayBufferToBase64(buffer);
 
@@ -83,30 +92,17 @@ async function makeTrainingPdf() {
   doc.setFontSize(16);
   doc.text("훈련 시간표", 14, 45);
 
-  // docx 구조와 맞춘 PDF용 body
-  // merge처럼 보이게 하기 위해 메타정보도 같이 넣음
+  /* =======================
+      시간표 테이블
+  ======================= */
+
   const logBody = [];
+
   rows.forEach((r) => {
     r.time.forEach((t, i) => {
       logBody.push([
-        {
-          content: t,
-          _mergeInfo: {
-            type: "time",
-            first: i === 0,
-            last: i === r.time.length - 1,
-            single: r.time.length === 1
-          }
-        },
-        {
-          content: i === 0 ? (r.content ?? "").toString() : "",
-          _mergeInfo: {
-            type: "content",
-            first: i === 0,
-            last: i === r.time.length - 1,
-            single: r.time.length === 1
-          }
-        }
+        t,
+        i === 0 ? r.content : ""
       ]);
     });
   });
@@ -119,101 +115,115 @@ async function makeTrainingPdf() {
       font: "NotoSansKR",
       fontSize: 12,
       cellPadding: 3,
-      valign: "top",
-      lineColor: [153, 153, 153],
+      lineColor: [153,153,153],
       lineWidth: 0.2,
-      overflow: "linebreak",
-      textColor: [0, 0, 0],
+      overflow: "linebreak"
     },
     headStyles: {
       font: "NotoSansKR",
       fontStyle: "normal",
-      fillColor: [255, 255, 255],
-      textColor: [0, 0, 0],
       halign: "center",
-      valign: "middle",
-      lineColor: [153, 153, 153],
-      lineWidth: 0.2,
+      fillColor: [255,255,255],
+      textColor: [0,0,0]
     },
     columnStyles: {
-      0: { cellWidth: 35, halign: "center", valign: "middle" },
-      1: { cellWidth: 140, valign: "top" },
+      0: { cellWidth: 35, halign: "center" },
+      1: { cellWidth: 140 }
     },
-    didParseCell: function (data) {
+    didParseCell: function(data){
+      if(data.section !== "body") return;
+
       data.cell.styles.font = "NotoSansKR";
       data.cell.styles.fontStyle = "normal";
 
-      if (data.section !== "body") return;
-
-      const raw = data.cell.raw;
-      const mergeInfo = raw?._mergeInfo;
-
-      if (!mergeInfo) return;
-
-      // 내용칸만 세로 병합처럼 보이게 처리
-      if (data.column.index === 1) {
-        if (mergeInfo.single) {
+      if(data.column.index === 1){
+        if(data.cell.raw === ""){
           data.cell.styles.lineWidth = {
-            top: 0.2,
-            right: 0.2,
-            bottom: 0.2,
-            left: 0.2,
-          };
-        } else if (mergeInfo.first) {
-          data.cell.styles.lineWidth = {
-            top: 0.2,
-            right: 0.2,
-            bottom: 0,
-            left: 0.2,
-          };
-        } else if (mergeInfo.last) {
-          data.cell.styles.lineWidth = {
-            top: 0,
-            right: 0.2,
-            bottom: 0.2,
-            left: 0.2,
-          };
-        } else {
-          data.cell.styles.lineWidth = {
-            top: 0,
-            right: 0.2,
-            bottom: 0,
-            left: 0.2,
-          };
+            top:0,
+            right:0.2,
+            bottom:0.2,
+            left:0.2
+          }
         }
       }
-    },
+    }
   });
 
-  if (useMemo.value) {
-    const afterTableY = doc.lastAutoTable?.finalY ?? 50;
-    const memoTitleY = afterTableY + 12;
+  let cursorY = doc.lastAutoTable.finalY;
 
-    doc.setFont("NotoSansKR");
+  /* =======================
+      메모
+  ======================= */
+
+  if(useMemo.value){
+
     doc.setFontSize(16);
-    doc.text("메모", 14, memoTitleY);
+    doc.text("메모",14,cursorY + 15);
 
-    autoTable(doc, {
-      startY: memoTitleY + 5,
-      body: [[(memo.value ?? "").toString()]],
-      styles: {
+    autoTable(doc,{
+      startY: cursorY + 20,
+      body: [[memo.value]],
+      styles:{
+        font:"NotoSansKR",
+        fontSize:12,
+        cellPadding:3,
+        lineColor:[153,153,153],
+        lineWidth:0.2,
+        overflow:"linebreak"
+      },
+      columnStyles:{
+        0:{cellWidth:175}
+      }
+    });
+
+    cursorY = doc.lastAutoTable.finalY;
+  }
+
+  /* =======================
+      과제 풀이
+  ======================= */
+
+  if(useTask.value){
+
+    doc.setFontSize(16);
+    doc.text("과제 풀이",14,cursorY + 15);
+
+    const taskBody = taskMemo.value.map((v,i)=>[
+      String(taskTime.value[i]),
+      taskTitle.value[i],
+      v
+    ]);
+
+    autoTable(doc,{
+      startY: cursorY + 20,
+      head:[["풀이 시간","과제 제목","과제 메모"]],
+      body:taskBody,
+      styles:{
+        font:"NotoSansKR",
+        fontSize:12,
+        cellPadding:3,
+        lineColor:[153,153,153],
+        lineWidth:0.2,
+        overflow:"linebreak"
+      },
+      headStyles:{
         font: "NotoSansKR",
-        fontSize: 12,
-        cellPadding: 3,
-        valign: "top",
-        lineColor: [153, 153, 153],
-        lineWidth: 0.2,
-        overflow: "linebreak",
-        textColor: [0, 0, 0],
+        fontStyle: "normal",
+        halign:"center",
+        fillColor:[255,255,255],
+        textColor:[0,0,0]
       },
-      columnStyles: {
-        0: { cellWidth: 175, valign: "top" },
+      columnStyles:{
+        0:{cellWidth:30, halign:"center"},
+        1:{cellWidth:55},
+        2:{cellWidth:90}
       },
-      didParseCell: function (data) {
+      didParseCell: function(data) {
         data.cell.styles.font = "NotoSansKR";
         data.cell.styles.fontStyle = "normal";
-      },
+      }
     });
+
   }
 
   doc.save(`${dates.value.replaceAll("-", "_")}_훈련일지.pdf`);
@@ -290,6 +300,7 @@ async function makeTrainingPdf() {
     };
 
     let logCells = [];
+    let taskCells = [];
 
     rows.forEach((r) => {
       logCells.push(...r.time.map((v, i) => {
@@ -300,6 +311,15 @@ async function makeTrainingPdf() {
         })
       }));
     });
+
+    taskCells.push(...taskMemo.value.map((v, i) => {
+      return new TableRow({
+        children: [
+          dataCell(String(taskTime.value[i]), {}, { size: 100 / 6, type: WidthType.PERCENTAGE }),
+          dataCell(taskTitle.value[i], {}, { size: 100 / 6 * 2, type: WidthType.PERCENTAGE }),
+          dataCell(v, {}, { size: 100 / 6 * 3, type: WidthType.PERCENTAGE })],
+      })
+    }))
 
     const logTable = new Table({
       width: { size: 100, type: WidthType.PERCENTAGE },
@@ -321,7 +341,19 @@ async function makeTrainingPdf() {
       ],
     })
 
+    const taskTable = new Table({
+      width: { size: 100, type: WidthType.PERCENTAGE },
+      rows: [
+          new TableRow({
+            children: [headerCell("풀이 시간", { size: 100 / 6, type: WidthType.PERCENTAGE }), headerCell("과제 제목", { size: 100 / 6 * 2, type: WidthType.PERCENTAGE }), headerCell("과제 메모", { size: 100 / 6 * 3, type: WidthType.PERCENTAGE })],
+          }),
+
+          ...taskCells
+      ],
+    })
+
     let memoSection = [];
+    let taskSection = [];
 
     if (useMemo.value) {
       memoSection = [
@@ -330,6 +362,16 @@ async function makeTrainingPdf() {
           children: [new TextRun({ text: "메모", bold: true, size: 24, font: "Malgun Gothic" })],
         }),
         memoTable
+      ]
+    }
+
+    if (useTask.value) {
+      taskSection = [
+        new Paragraph({
+          spacing: { before: 600, after: 100 },
+          children: [new TextRun({ text: "과제 풀이", bold: true, size: 24, font: "Malgun Gothic" })],
+        }),
+        taskTable
       ]
     }
 
@@ -349,7 +391,8 @@ async function makeTrainingPdf() {
               children: [new TextRun({ text: "훈련 시간표", bold: true, size: 24, font: "Malgun Gothic" })],
             }),
             logTable,
-            ...memoSection
+            ...memoSection,
+            ...taskSection,
           ],
         },
       ],

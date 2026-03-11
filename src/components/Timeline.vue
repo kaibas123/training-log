@@ -34,8 +34,12 @@
 
 <template>
   <h2 class="mt2">훈련 시간표</h2>
-  <div class="timeline">
+  <div class="tables">
     <div class="item" v-for="(v, i) in timelineKey">
+      <div v-if="i" class="icon delete" @click="deleteTimeline(i)">X</div>
+      <div v-if="i !== timelineKey.length - 1" class="icon divine" @click="divineCell(i, i + 1)">↕</div>
+      <div v-if="i === timelineKey.length - 1" class="icon plus" @click="addTimeline()">+</div>
+
       <div class="col-flex">
         <div class="sec jcc gap por" v-for="(va, id) in v">
           <div class="col-flex">
@@ -132,46 +136,15 @@
         </div>
       </div>
 
-      <div class="sec"><textarea v-model="timelineValue[i]"></textarea></div>
-
-      <div v-if="i" class="icon delete" @click="deleteTimeline(i)">X</div>
-      <div v-if="i !== timelineKey.length - 1" class="icon divine" @click="divineCell(i, i + 1)">↕</div>
-      <div v-if="i === timelineKey.length - 1" class="icon plus" @click="addTimeline()">+</div>
+      <div class="sec"><textarea v-model="timelineValue[i]" placeholder="일지 내용을 입력 해주세요!"></textarea></div>
     </div>
   </div>
 </template>
 
 <style scoped>
-  textarea {
-    width: 100%;
-    min-height: 100%;
-    border: 0;
-    resize: none;
-    outline: none;
-  }
-
   p {
     margin: 0;
   }
-
-  .icon {
-    height: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: absolute;
-    top: 50%;
-    left: calc(100% + 1rem);
-    transform: translateY(-50%);
-    font-size: 1.5rem;
-    color: gray;
-    opacity: .7;
-    transition: .3s;
-    cursor: pointer;
-    font-weight: 700;
-  }
-
-  .icon:hover {opacity: 1}
 
   .divine {
     top: 100%;
@@ -185,39 +158,5 @@
     left: auto;
     right: calc(100% + .85rem);
     font-size: 1rem;
-  }
-
-  .plus {
-    left: calc(100% + 3rem);
-    font-size: 2rem;
-    padding-bottom: 4px;
-  }
-
-  .item {
-    width: 90%;
-    display: grid;
-    grid-template-columns: 1fr 3fr;
-    border-left: 1px solid gray;
-    position: relative;
-  }
-
-  .item:nth-child(1) {
-    border-top: 1px solid gray;
-    border-top-left-radius: 5px;
-    border-top-right-radius: 5px;
-  }
-
-  .item:nth-last-child(1) {
-    border-bottom-left-radius: 5px;
-    border-bottom-right-radius: 5px;
-  }
-
-  .sec {
-    width: 100%;
-    border-right: 1px solid gray;
-    border-bottom: 1px solid gray;
-    display: flex;
-    align-items: center;
-    padding: .75rem 1rem;
   }
 </style>

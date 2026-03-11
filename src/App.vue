@@ -4,6 +4,7 @@
   import Memo from "@/components/Memo.vue";
   import {onMounted} from "vue";
   import {dates, memo, timelineKey, timelineValue, useMemo} from "../reactions.js";
+  import Task from "@/components/Task.vue";
 
   onMounted(() => {
     if (localStorage['trainingLogData'] && localStorage['trainingLogData'] !== "") {
@@ -26,6 +27,8 @@
       <Timeline />
 
       <Memo />
+
+      <Task />
     </div>
   </div>
 </template>
