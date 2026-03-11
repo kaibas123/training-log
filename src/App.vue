@@ -3,7 +3,17 @@
   import Timeline from "@/components/Timeline.vue";
   import Memo from "@/components/Memo.vue";
   import {onMounted} from "vue";
-  import {dates, memo, timelineKey, timelineValue, useMemo} from "../reactions.js";
+  import {
+    dates,
+    memo,
+    taskMemo,
+    taskTime,
+    taskTitle,
+    timelineKey,
+    timelineValue,
+    useMemo,
+    useTask
+  } from "../reactions.js";
   import Task from "@/components/Task.vue";
 
   onMounted(() => {
@@ -15,6 +25,10 @@
       timelineKey.value = data.timelineKey;
       useMemo.value = data.useMemo;
       memo.value = data.memo;
+      useTask.value = data.useTask;
+      taskTitle.value = data.taskTitle;
+      taskTime.value = data.taskTime;
+      taskMemo.value = data.taskMemo;
     }
   });
 </script>

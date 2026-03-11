@@ -1,15 +1,15 @@
 <script setup>
-import {
-  affil,
-  dates,
-  memo,
-  taskMemo,
-  taskTime,
-  taskTitle,
-  timelineKey,
-  timelineValue,
-  useMemo, useTask
-} from "../../reactions.js";
+  import {
+    affil,
+    dates,
+    memo,
+    taskMemo,
+    taskTime,
+    taskTitle,
+    timelineKey,
+    timelineValue,
+    useMemo, useTask
+  } from "../../reactions.js";
   import {
     Document,
     Packer,
@@ -28,13 +28,13 @@ import {
   import jsPDF from "jspdf";
   import autoTable from "jspdf-autotable";
   import fontFile from "@/assets/NotoSansKR.ttf?url";
-import {watch} from "vue";
+  import {watch} from "vue";
 
   watch(affil, () => {
     localStorage['affil'] = affil.value;
   });
 
-function arrayBufferToBase64(buffer) {
+  function arrayBufferToBase64(buffer) {
   let binary = "";
   const bytes = new Uint8Array(buffer);
   const chunkSize = 0x8000;
@@ -46,7 +46,7 @@ function arrayBufferToBase64(buffer) {
   return btoa(binary);
 }
 
-async function makeTrainingPdf() {
+  async function makeTrainingPdf() {
   if (affil.value === "") return alert("직종을 선택 해주세요.");
   if (dates.value === "") return alert("날짜를 선택 해주세요.");
 
@@ -409,6 +409,10 @@ async function makeTrainingPdf() {
       timelineKey: timelineKey.value,
       useMemo: useMemo.value,
       memo: memo.value,
+      useTask: useTask.value,
+      taskMemo: taskMemo.value,
+      taskTitle: taskTitle.value,
+      taskTime: taskTime.value,
     }
 
     localStorage['trainingLogData'] = JSON.stringify(data);
