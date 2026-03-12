@@ -33,8 +33,8 @@
 </script>
 
 <template>
-  <h2 class="mt2">훈련 시간표</h2>
-  <div class="tables">
+  <h2 class="mt2 title">훈련 시간표</h2>
+  <section class="tables">
     <div class="item" v-for="(v, i) in timelineKey">
       <div v-if="i" class="icon delete" @click="deleteTimeline(i)">X</div>
       <div v-if="i !== timelineKey.length - 1" class="icon divine" @click="divineCell(i, i + 1)">↕</div>
@@ -138,7 +138,7 @@
 
       <div class="sec"><textarea v-model="timelineValue[i]" placeholder="일지 내용을 입력 해주세요!"></textarea></div>
     </div>
-  </div>
+  </section>
 </template>
 
 <style scoped>

@@ -1,6 +1,6 @@
 <script setup>
 
-import {useTomorrow, tomorrow} from "../../reactions.js";
+import {useTomorrow, tomorrow, useWrong} from "../../reactions.js";
 
 function deleteTomorrow(i) {
   tomorrow.value.splice(i - 1, 1);
@@ -12,9 +12,9 @@ function addTomorrow() {
 </script>
 
 <template>
-  <div class="col-flex">
+  <section class="col-flex">
     <div class="top flex jcs gap aic mt2">
-      <h2 :style="{opacity: useTomorrow ? 1 : 0.5}">내일 할 일</h2>
+      <h2 class="title" :style="{opacity: useTomorrow ? 1 : 0.5}" @click="useTomorrow = !useTomorrow">내일 할 일</h2>
       <input type="checkbox" v-model="useTomorrow">
     </div>
 
@@ -32,7 +32,7 @@ function addTomorrow() {
         </div>
       </div>
     </div>
-  </div>
+  </section>
 </template>
 
 <style scoped>

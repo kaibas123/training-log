@@ -1,17 +1,17 @@
 <script setup>
 
-import {useMemo, memo} from "../../reactions.js";
+import {useMemo, memo, useWrong} from "../../reactions.js";
 </script>
 
 <template>
-  <div class="col-flex">
+  <section class="col-flex">
     <div class="top flex jcs gap aic mt2">
-      <h2 :style="{opacity: useMemo ? 1 : 0.5}">메모</h2>
+      <h2 class="title" :style="{opacity: useMemo ? 1 : 0.5}" @click="useMemo = !useMemo">메모</h2>
       <input type="checkbox" v-model="useMemo">
     </div>
 
     <textarea v-model="memo" v-if="useMemo" class="memo" placeholder="메모를 입력 해주세요!"></textarea>
-  </div>
+  </section>
 </template>
 
 <style scoped>

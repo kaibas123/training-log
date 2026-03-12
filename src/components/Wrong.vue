@@ -14,9 +14,9 @@ function deleteWrong(i) {
 </script>
 
 <template>
-  <div class="col-flex">
+  <section class="col-flex">
     <div class="top flex jcs gap aic mt2">
-      <h2 :style="{opacity: useWrong ? 1 : 0.5}">오답 노트</h2>
+      <h2 class="title" :style="{opacity: useWrong ? 1 : 0.5}" @click="useWrong = !useWrong">오답 노트</h2>
       <input type="checkbox" v-model="useWrong">
     </div>
 
@@ -35,7 +35,7 @@ function deleteWrong(i) {
         <div class="sec"><textarea v-model="wrongFeedback[i]" placeholder="틀리거나 아쉬웠던 부분에 대한 해결 방법이나 앞으로의 계획을 입력 해주세요!"></textarea></div>
       </div>
     </div>
-  </div>
+  </section>
 </template>
 
 <style scoped>

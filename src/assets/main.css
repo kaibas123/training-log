@@ -150,3 +150,8 @@ img {
 .tables .form-floating {
   width: 100%;
 }
+
+.title {
+  user-select: none;
+  cursor: default;
+}

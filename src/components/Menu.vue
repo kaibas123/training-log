@@ -639,9 +639,9 @@ import {
 </script>
 
 <template>
-  <h1>{{ affil }} 훈련일지 작성</h1>
+  <h1 class="title">{{ affil }} 훈련일지 작성</h1>
 
-  <div class="top flex jcs gap aic">
+  <section class="top flex jcs gap aic">
     <div class="form-floating">
       <select v-model="affil" id="affil" class="form-control">
         <option value="" hidden selected>직종을 선택 해주세요</option>
@@ -665,7 +665,7 @@ import {
     <button class="btn btn-success" @click="saveData()">임시저장</button>
     <button class="btn btn-primary" @click="makeTrainingDocx()">Word 다운로드</button>
     <button class="btn btn-secondary" @click="makeTrainingPdf()">PDF 다운로드</button>
-  </div>
+  </section>
 </template>
 
 <style scoped>

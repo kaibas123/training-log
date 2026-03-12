@@ -1,12 +1,12 @@
 <script setup>
 
-import {useOne, one} from "../../reactions.js";
+import {useOne, one, useWrong} from "../../reactions.js";
 </script>
 
 <template>
-  <div class="col-flex">
+  <section class="col-flex">
     <div class="top flex jcs gap aic mt2">
-      <h2 :style="{opacity: useOne ? 1 : 0.5}">한 줄 요약</h2>
+      <h2 class="title" :style="{opacity: useOne ? 1 : 0.5}" @click="useOne = !useOne">한 줄 요약</h2>
       <input type="checkbox" v-model="useOne">
     </div>
 
@@ -14,7 +14,7 @@ import {useOne, one} from "../../reactions.js";
       <input type="text" v-model="one" id="one" class="form-control" placeholder="1">
       <label for="one">오늘 있었던 일을 한 줄로 요약 해보세요!</label>
     </div>
-  </div>
+  </section>
 </template>
 
 <style scoped>

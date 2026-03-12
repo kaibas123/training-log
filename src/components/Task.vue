@@ -1,6 +1,6 @@
 <script setup>
 
-import {taskTitle, taskMemo, taskTime, useTask} from "../../reactions.js";
+import {taskTitle, taskMemo, taskTime, useTask, useWrong} from "../../reactions.js";
 
 function removeTask(i) {
   taskMemo.value.splice(i, 1);
@@ -16,9 +16,9 @@ function addTask(i) {
 </script>
 
 <template>
-  <div class="col-flex">
+  <section class="col-flex">
     <div class="top flex jcs gap aic mt2">
-      <h2 :style="{opacity: useTask ? 1 : 0.5}">과제풀이</h2>
+      <h2 class="title" :style="{opacity: useTask ? 1 : 0.5}" @click="useTask = !useTask">과제풀이</h2>
       <input type="checkbox" v-model="useTask">
     </div>
 
@@ -44,7 +44,7 @@ function addTask(i) {
         <div class="sec"><textarea v-model="taskMemo[i]" placeholder="과제에 대한 메모를 입력 해주세요!"></textarea></div>
       </div>
     </div>
-  </div>
+  </section>
 </template>
 
 <style scoped>
