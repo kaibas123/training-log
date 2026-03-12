@@ -15,6 +15,7 @@
     useTask
   } from "../reactions.js";
   import Task from "@/components/Task.vue";
+  import Wrong from "@/components/Wrong.vue";
 
   onMounted(() => {
     if (localStorage['trainingLogData'] && localStorage['trainingLogData'] !== "") {
@@ -43,6 +44,8 @@
       <Memo />
 
       <Task />
+
+      <Wrong />
     </div>
   </div>
 </template>

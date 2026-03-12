@@ -17,3 +17,7 @@ export const useTask = ref(false);
 export const taskTime = ref([0]);
 export const taskTitle = ref(['']);
 export const taskMemo = ref(['']);
+
+export const useWrong = ref(false);
+export const wrongTitle = ref([""]);
+export const wrongFeedback = ref([""]);

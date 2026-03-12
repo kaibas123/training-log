@@ -1,15 +1,15 @@
 <script setup>
-  import {
-    affil,
-    dates,
-    memo,
-    taskMemo,
-    taskTime,
-    taskTitle,
-    timelineKey,
-    timelineValue,
-    useMemo, useTask
-  } from "../../reactions.js";
+import {
+  affil,
+  dates,
+  memo,
+  taskMemo,
+  taskTime,
+  taskTitle,
+  timelineKey,
+  timelineValue,
+  useMemo, useTask, wrongFeedback, wrongTitle
+} from "../../reactions.js";
   import {
     Document,
     Packer,
@@ -301,6 +301,7 @@
 
     let logCells = [];
     let taskCells = [];
+    let wrongCells = [];
 
     rows.forEach((r) => {
       logCells.push(...r.time.map((v, i) => {
@@ -319,7 +320,15 @@
           dataCell(taskTitle.value[i], {}, { size: 100 / 6 * 2, type: WidthType.PERCENTAGE }),
           dataCell(v, {}, { size: 100 / 6 * 3, type: WidthType.PERCENTAGE })],
       })
-    }))
+    }));
+
+    wrongCells.push(...wrongTitle.value.map((v, i) => {
+      return new TableRow({
+        children: [
+          dataCell(v, {}, { size: 20, type: WidthType.PERCENTAGE }),
+          dataCell(wrongFeedback.value[i], {}, { size: 80, type: WidthType.PERCENTAGE })
+      ]})
+    }));
 
     const logTable = new Table({
       width: { size: 100, type: WidthType.PERCENTAGE },
@@ -339,7 +348,7 @@
             children: [dataCell(memo.value, { size: 100, type: WidthType.PERCENTAGE },)],
           })
       ],
-    })
+    });
 
     const taskTable = new Table({
       width: { size: 100, type: WidthType.PERCENTAGE },
@@ -350,10 +359,22 @@
 
           ...taskCells
       ],
-    })
+    });
+
+    const wrongTable = new Table({
+      width: { size: 100, type: WidthType.PERCENTAGE },
+      rows: [
+          new TableRow({
+            children: [headerCell("틀림 / 아쉬움", { size: 20, type: WidthType.PERCENTAGE }), headerCell("해결방안 / 계획", { size: 80, type: WidthType.PERCENTAGE })],
+          }),
+
+          ...wrongCells
+      ],
+    });
 
     let memoSection = [];
     let taskSection = [];
+    let wrongSection = [];
 
     if (useMemo.value) {
       memoSection = [
@@ -362,7 +383,7 @@
           children: [new TextRun({ text: "메모", bold: true, size: 24, font: "Malgun Gothic" })],
         }),
         memoTable
-      ]
+      ];
     }
 
     if (useTask.value) {
@@ -372,7 +393,17 @@
           children: [new TextRun({ text: "과제 풀이", bold: true, size: 24, font: "Malgun Gothic" })],
         }),
         taskTable
-      ]
+      ];
+    }
+
+    if (useWrong.value) {
+      wrongSection = [
+        new Paragraph({
+          spacing: { before: 600, after: 100 },
+          children: [new TextRun({ text: "오답 노트", bold: true, size: 24, font: "Malgun Gothic" })],
+        }),
+        wrongTable
+      ];
     }
 
     const doc = new Document({
@@ -393,6 +424,7 @@
             logTable,
             ...memoSection,
             ...taskSection,
+            ...wrongSection,
           ],
         },
       ],

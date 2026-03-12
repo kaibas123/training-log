@@ -146,3 +146,7 @@ img {
   font-size: 2rem;
   padding-bottom: 4px;
 }
+
+.tables .form-floating {
+  width: 100%;
+}
