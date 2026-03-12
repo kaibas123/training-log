@@ -2,13 +2,13 @@
 import {
   affil,
   dates,
-  memo,
+  memo, one,
   taskMemo,
   taskTime,
   taskTitle,
   timelineKey,
-  timelineValue,
-  useMemo, useTask, wrongFeedback, wrongTitle
+  timelineValue, tomorrow,
+  useMemo, useOne, useTask, useTomorrow, useWrong, wrongFeedback, wrongTitle
 } from "../../reactions.js";
   import {
     Document,
@@ -47,187 +47,307 @@ import {
 }
 
   async function makeTrainingPdf() {
-  if (affil.value === "") return alert("직종을 선택 해주세요.");
-  if (dates.value === "") return alert("날짜를 선택 해주세요.");
+    if (affil.value === "") return alert("직종을 선택 해주세요.");
+    if (dates.value === "") return alert("날짜를 선택 해주세요.");
 
-  localStorage["trainingLogData"] = "";
+    localStorage["trainingLogData"] = "";
 
-  let dateArr = dates.value.split("-");
-  let time = new Date(dates.value + " 12:00:00");
-  let day = ["일", "월", "화", "수", "목", "금", "토"][time.getDay()];
+    const dateArr = dates.value.split("-");
+    const time = new Date(dates.value + " 12:00:00");
+    const day = ["일", "월", "화", "수", "목", "금", "토"][time.getDay()];
 
-  let title = `${affil.value} 훈련일지`;
-  let dateText = `${dateArr[0]}년 ${dateArr[1]}월 ${dateArr[2]}일 (${day})`;
+    const title = `${affil.value} 훈련일지`;
+    const dateText = `${dateArr[0]}년 ${dateArr[1]}월 ${dateArr[2]}일 (${day})`;
 
-  let rows = [];
-
-  timelineValue.value.forEach((v, i) => {
-    let keys = timelineKey.value[i];
-    rows.push({
-      time: [...keys.map(va => `${va.start.join(":")} ~ ${va.end.join(":")}`)],
-      content: v
+    const rows = [];
+    timelineValue.value.forEach((v, i) => {
+      const keys = timelineKey.value[i];
+      rows.push({
+        time: keys.map((va) => `${va.start.join(":")} ~ ${va.end.join(":")}`),
+        content: v,
+      });
     });
-  });
 
-  const doc = new jsPDF({
-    orientation: "portrait",
-    unit: "mm",
-    format: "a4"
-  });
-
-  const res = await fetch(fontFile);
-  const buffer = await res.arrayBuffer();
-  const base64 = arrayBufferToBase64(buffer);
-
-  doc.addFileToVFS("NotoSansKR.ttf", base64);
-  doc.addFont("NotoSansKR.ttf", "NotoSansKR", "normal");
-  doc.setFont("NotoSansKR");
-
-  doc.setFontSize(22);
-  doc.text(title, 14, 20);
-
-  doc.setFontSize(14);
-  doc.text(dateText, 14, 30);
-
-  doc.setFontSize(16);
-  doc.text("훈련 시간표", 14, 45);
-
-  /* =======================
-      시간표 테이블
-  ======================= */
-
-  const logBody = [];
-
-  rows.forEach((r) => {
-    r.time.forEach((t, i) => {
-      logBody.push([
-        t,
-        i === 0 ? r.content : ""
-      ]);
+    const doc = new jsPDF({
+      orientation: "portrait",
+      unit: "mm",
+      format: "a4",
     });
-  });
 
-  autoTable(doc, {
-    startY: 50,
-    head: [["시간", "내용"]],
-    body: logBody,
-    styles: {
+    const res = await fetch(fontFile);
+    const buffer = await res.arrayBuffer();
+    const base64 = arrayBufferToBase64(buffer);
+
+    doc.addFileToVFS("NotoSansKR.ttf", base64);
+    doc.addFont("NotoSansKR.ttf", "NotoSansKR", "normal");
+    doc.setFont("NotoSansKR");
+
+    const PAGE_WIDTH = doc.internal.pageSize.getWidth();
+    const PAGE_HEIGHT = doc.internal.pageSize.getHeight();
+    const LEFT = 14;
+    const RIGHT = 14;
+    const CONTENT_WIDTH = PAGE_WIDTH - LEFT - RIGHT;
+    const BOTTOM_MARGIN = 14;
+
+    const normalStyle = {
       font: "NotoSansKR",
+      fontStyle: "normal",
       fontSize: 12,
       cellPadding: 3,
-      lineColor: [153,153,153],
+      lineColor: [153, 153, 153],
       lineWidth: 0.2,
-      overflow: "linebreak"
-    },
-    headStyles: {
+      overflow: "linebreak",
+      textColor: [0, 0, 0],
+      valign: "middle",
+    };
+
+    const headStyle = {
       font: "NotoSansKR",
       fontStyle: "normal",
       halign: "center",
-      fillColor: [255,255,255],
-      textColor: [0,0,0]
-    },
-    columnStyles: {
-      0: { cellWidth: 35, halign: "center" },
-      1: { cellWidth: 140 }
-    },
-    didParseCell: function(data){
-      if(data.section !== "body") return;
+      valign: "middle",
+      fillColor: [255, 255, 255],
+      textColor: [0, 0, 0],
+      lineColor: [153, 153, 153],
+      lineWidth: 0.2,
+    };
 
-      data.cell.styles.font = "NotoSansKR";
-      data.cell.styles.fontStyle = "normal";
-
-      if(data.column.index === 1){
-        if(data.cell.raw === ""){
-          data.cell.styles.lineWidth = {
-            top:0,
-            right:0.2,
-            bottom:0.2,
-            left:0.2
-          }
-        }
-      }
+    function drawSectionTitle(text, y) {
+      doc.setFont("NotoSansKR");
+      doc.setFontSize(16);
+      doc.text(text, LEFT, y);
     }
-  });
 
-  let cursorY = doc.lastAutoTable.finalY;
+    function getLastTableState() {
+      if (!doc.lastAutoTable) {
+        return {
+          pageNumber: doc.getNumberOfPages(),
+          finalY: 45,
+        };
+      }
 
-  /* =======================
-      메모
-  ======================= */
+      return {
+        pageNumber: doc.lastAutoTable.pageNumber,
+        finalY: doc.lastAutoTable.finalY,
+      };
+    }
 
-  if(useMemo.value){
+    function prepareSection(minHeight = 30) {
+      let { pageNumber, finalY } = getLastTableState();
+
+      // 마지막 autoTable이 끝난 페이지로 강제로 이동
+      doc.setPage(pageNumber);
+
+      // 현재 페이지에서 공간 부족하면 새 페이지 추가
+      if (finalY + minHeight > PAGE_HEIGHT - BOTTOM_MARGIN) {
+        doc.addPage();
+        pageNumber = doc.getNumberOfPages();
+        doc.setPage(pageNumber);
+        finalY = 20;
+      }
+
+      return finalY;
+    }
+
+    /* =======================
+        제목
+    ======================= */
+    doc.setFontSize(22);
+    doc.text(title, LEFT, 20);
+
+    doc.setFontSize(14);
+    doc.text(dateText, LEFT, 30);
 
     doc.setFontSize(16);
-    doc.text("메모",14,cursorY + 15);
+    doc.text("훈련 시간표", LEFT, 45);
 
-    autoTable(doc,{
-      startY: cursorY + 20,
-      body: [[memo.value]],
-      styles:{
-        font:"NotoSansKR",
-        fontSize:12,
-        cellPadding:3,
-        lineColor:[153,153,153],
-        lineWidth:0.2,
-        overflow:"linebreak"
-      },
-      columnStyles:{
-        0:{cellWidth:175}
-      }
+    /* =======================
+        훈련 시간표
+    ======================= */
+    const logBody = [];
+
+    rows.forEach((r) => {
+      r.time.forEach((t, i) => {
+        logBody.push([
+          t,
+          i === 0 ? r.content : "",
+        ]);
+      });
     });
 
-    cursorY = doc.lastAutoTable.finalY;
-  }
-
-  /* =======================
-      과제 풀이
-  ======================= */
-
-  if(useTask.value){
-
-    doc.setFontSize(16);
-    doc.text("과제 풀이",14,cursorY + 15);
-
-    const taskBody = taskMemo.value.map((v,i)=>[
-      String(taskTime.value[i]),
-      taskTitle.value[i],
-      v
-    ]);
-
-    autoTable(doc,{
-      startY: cursorY + 20,
-      head:[["풀이 시간","과제 제목","과제 메모"]],
-      body:taskBody,
-      styles:{
-        font:"NotoSansKR",
-        fontSize:12,
-        cellPadding:3,
-        lineColor:[153,153,153],
-        lineWidth:0.2,
-        overflow:"linebreak"
+    autoTable(doc, {
+      startY: 50,
+      head: [["시간", "내용"]],
+      body: logBody,
+      styles: normalStyle,
+      headStyles: headStyle,
+      columnStyles: {
+        0: { cellWidth: CONTENT_WIDTH * 0.2, halign: "center" },
+        1: { cellWidth: CONTENT_WIDTH * 0.8 },
       },
-      headStyles:{
-        font: "NotoSansKR",
-        fontStyle: "normal",
-        halign:"center",
-        fillColor:[255,255,255],
-        textColor:[0,0,0]
-      },
-      columnStyles:{
-        0:{cellWidth:30, halign:"center"},
-        1:{cellWidth:55},
-        2:{cellWidth:90}
-      },
-      didParseCell: function(data) {
+      didParseCell(data) {
+        if (data.section !== "body") return;
+
         data.cell.styles.font = "NotoSansKR";
         data.cell.styles.fontStyle = "normal";
-      }
+
+        if (data.column.index === 1 && data.cell.raw === "") {
+          data.cell.styles.lineWidth = {
+            top: 0,
+            right: 0.2,
+            bottom: 0.2,
+            left: 0.2,
+          };
+        }
+      },
     });
 
-  }
+    let cursorY = doc.lastAutoTable.finalY;
 
-  doc.save(`${dates.value.replaceAll("-", "_")}_훈련일지.pdf`);
-}
+    /* =======================
+        메모
+    ======================= */
+    if (useMemo.value) {
+      cursorY = prepareSection(30);
+
+      drawSectionTitle("메모", cursorY + 15);
+
+      autoTable(doc, {
+        startY: cursorY + 20,
+        body: [[memo.value || ""]],
+        styles: normalStyle,
+        columnStyles: {
+          0: { cellWidth: CONTENT_WIDTH },
+        },
+      });
+
+      cursorY = doc.lastAutoTable.finalY;
+    }
+
+    /* =======================
+        과제 풀이
+    ======================= */
+    if (useTask.value) {
+      cursorY = prepareSection(30);
+
+      drawSectionTitle("과제 풀이", cursorY + 15);
+
+      const taskBody = taskMemo.value.map((v, i) => [
+        String(taskTime.value[i] ?? ""),
+        taskTitle.value[i] ?? "",
+        v ?? "",
+      ]);
+
+      autoTable(doc, {
+        startY: cursorY + 20,
+        head: [["풀이 시간", "과제 제목", "과제 메모"]],
+        body: taskBody,
+        styles: normalStyle,
+        headStyles: headStyle,
+        columnStyles: {
+          0: { cellWidth: CONTENT_WIDTH * (1 / 6), halign: "center" },
+          1: { cellWidth: CONTENT_WIDTH * (2 / 6) },
+          2: { cellWidth: CONTENT_WIDTH * (3 / 6) },
+        },
+        didParseCell(data) {
+          data.cell.styles.font = "NotoSansKR";
+          data.cell.styles.fontStyle = "normal";
+        },
+      });
+
+      cursorY = doc.lastAutoTable.finalY;
+    }
+
+    /* =======================
+        오답 노트
+    ======================= */
+    if (useWrong.value) {
+      cursorY = prepareSection(30);
+
+      drawSectionTitle("오답 노트", cursorY + 15);
+
+      const wrongBody = wrongTitle.value.map((v, i) => [
+        v ?? "",
+        wrongFeedback.value[i] ?? "",
+      ]);
+
+      autoTable(doc, {
+        startY: cursorY + 20,
+        head: [["틀림 / 아쉬움", "해결방안 / 계획"]],
+        body: wrongBody,
+        styles: normalStyle,
+        headStyles: headStyle,
+        columnStyles: {
+          0: { cellWidth: CONTENT_WIDTH * 0.2 },
+          1: { cellWidth: CONTENT_WIDTH * 0.8 },
+        },
+        didParseCell(data) {
+          data.cell.styles.font = "NotoSansKR";
+          data.cell.styles.fontStyle = "normal";
+        },
+      });
+
+      cursorY = doc.lastAutoTable.finalY;
+    }
+
+    /* =======================
+        내일 할 일
+    ======================= */
+    if (useTomorrow.value) {
+      cursorY = prepareSection(30);
+
+      drawSectionTitle("내일 할 일", cursorY + 15);
+
+      const tomorrowBody = tomorrow.value.map((v, i) => [
+        String(i + 1),
+        v ?? "",
+      ]);
+
+      autoTable(doc, {
+        startY: cursorY + 20,
+        head: [["번호", "할 일"]],
+        body: tomorrowBody,
+        styles: normalStyle,
+        headStyles: headStyle,
+        columnStyles: {
+          0: { cellWidth: CONTENT_WIDTH * 0.1, halign: "center" },
+          1: { cellWidth: CONTENT_WIDTH * 0.9 },
+        },
+        didParseCell(data) {
+          data.cell.styles.font = "NotoSansKR";
+          data.cell.styles.fontStyle = "normal";
+        },
+      });
+
+      cursorY = doc.lastAutoTable.finalY;
+    }
+
+    /* =======================
+        한 줄 요약
+    ======================= */
+    if (useOne.value) {
+      cursorY = prepareSection(30);
+
+      drawSectionTitle("한 줄 요약", cursorY + 15);
+
+      autoTable(doc, {
+        startY: cursorY + 20,
+        body: [[one.value || ""]],
+        styles: normalStyle,
+        columnStyles: {
+          0: { cellWidth: CONTENT_WIDTH },
+        },
+        didParseCell(data) {
+          data.cell.styles.font = "NotoSansKR";
+          data.cell.styles.fontStyle = "normal";
+        },
+      });
+
+      cursorY = doc.lastAutoTable.finalY;
+    }
+
+    doc.save(`${dates.value.replaceAll("-", "_")}_훈련일지.pdf`);
+  }
 
   async function makeTrainingDocx() {
     if (affil.value === "") return alert("직종을 선택 해주세요.");
@@ -302,6 +422,7 @@ import {
     let logCells = [];
     let taskCells = [];
     let wrongCells = [];
+    let tomorrowCells = [];
 
     rows.forEach((r) => {
       logCells.push(...r.time.map((v, i) => {
@@ -327,6 +448,14 @@ import {
         children: [
           dataCell(v, {}, { size: 20, type: WidthType.PERCENTAGE }),
           dataCell(wrongFeedback.value[i], {}, { size: 80, type: WidthType.PERCENTAGE })
+      ]})
+    }));
+
+    tomorrowCells.push(...tomorrow.value.map((v, i) => {
+      return new TableRow({
+        children: [
+          dataCell(String(i + 1), {}, { size: 10, type: WidthType.PERCENTAGE }),
+          dataCell(v, {}, { size: 90, type: WidthType.PERCENTAGE })
       ]})
     }));
 
@@ -372,9 +501,31 @@ import {
       ],
     });
 
+    const tomorrowTable = new Table({
+      width: { size: 100, type: WidthType.PERCENTAGE },
+      rows: [
+          new TableRow({
+            children: [headerCell("번호", { size: 10, type: WidthType.PERCENTAGE }), headerCell("할 일", { size: 90, type: WidthType.PERCENTAGE })],
+          }),
+
+          ...tomorrowCells
+      ],
+    });
+
+    const oneTable = new Table({
+      width: { size: 100, type: WidthType.PERCENTAGE },
+      rows: [
+        new TableRow({
+          children: [dataCell(one.value, { size: 100, type: WidthType.PERCENTAGE },)],
+        })
+      ],
+    });
+
     let memoSection = [];
     let taskSection = [];
     let wrongSection = [];
+    let tomorrowSection = [];
+    let oneSection = [];
 
     if (useMemo.value) {
       memoSection = [
@@ -406,6 +557,26 @@ import {
       ];
     }
 
+    if (useTomorrow.value) {
+      tomorrowSection = [
+        new Paragraph({
+          spacing: { before: 600, after: 100 },
+          children: [new TextRun({ text: "내일 할 일", bold: true, size: 24, font: "Malgun Gothic" })],
+        }),
+        tomorrowTable
+      ];
+    }
+
+    if (useOne.value) {
+      oneSection = [
+        new Paragraph({
+          spacing: { before: 600, after: 100 },
+          children: [new TextRun({ text: "한 줄 요약", bold: true, size: 24, font: "Malgun Gothic" })],
+        }),
+        oneTable
+      ];
+    }
+
     const doc = new Document({
       sections: [
         {
@@ -425,6 +596,8 @@ import {
             ...memoSection,
             ...taskSection,
             ...wrongSection,
+            ...tomorrowSection,
+            ...oneSection,
           ],
         },
       ],
@@ -439,12 +612,24 @@ import {
       dates: dates.value,
       timelineValue: timelineValue.value,
       timelineKey: timelineKey.value,
+
       useMemo: useMemo.value,
       memo: memo.value,
+
       useTask: useTask.value,
       taskMemo: taskMemo.value,
       taskTitle: taskTitle.value,
       taskTime: taskTime.value,
+
+      useWrong: useWrong.value,
+      wrongFeedback: wrongFeedback.value,
+      wrongTitle: wrongTitle.value,
+
+      useTomorrow: useTomorrow.value,
+      tomorrow: tomorrow.value,
+
+      useOne: useOne.value,
+      one: one.value,
     }
 
     localStorage['trainingLogData'] = JSON.stringify(data);

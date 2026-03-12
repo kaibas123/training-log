@@ -21,3 +21,9 @@ export const taskMemo = ref(['']);
 export const useWrong = ref(false);
 export const wrongTitle = ref([""]);
 export const wrongFeedback = ref([""]);
+
+export const useTomorrow = ref(false);
+export const tomorrow = ref([""]);
+
+export const useOne = ref(false);
+export const one = ref("");
